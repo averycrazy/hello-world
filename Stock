@@ -1,0 +1,23 @@
+import requests
+from io import StringIO
+import pandas as pd
+import numpy as np
+
+datestr = '20200508'
+
+# 下載股價
+r = requests.post('https://www.twse.com.tw/exchangeReport/MI_INDEX?response=csv&date=' + datestr + '&type=ALL')
+print (r.text)
+
+# 整理資料，變成表格
+df = pd.read_csv(StringIO(r.text.replace("=", "")), 
+            header=["證券代號" in l for l in r.text.split("\n")].index(True)-1)
+df.head()
+
+# 整理一些字串：
+#df = df.apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors='coerce'))
+df = pd.concat( [df[['證券代號','證券名稱']], df.drop(['證券代號','證券名稱'], axis=1).apply(lambda s: pd.to_numeric(s.astype(str).str.replace(",", "").replace("+", "1").replace("-", "-1"), errors='coerce'))] , axis=1)
+# 顯示出來
+df.head()
+#select stocks
+#df[pd.to_numeric(df['本益比'], errors='coerce') > 100]
